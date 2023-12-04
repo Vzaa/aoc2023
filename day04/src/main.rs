@@ -1,8 +1,8 @@
-use std::str::FromStr;
+use std::{collections::HashSet, str::FromStr};
 
 #[derive(Debug)]
 struct Card {
-    nums: Vec<u32>,
+    nums: HashSet<u32>,
 }
 
 impl FromStr for Card {
@@ -29,7 +29,7 @@ fn p1(instr: &str) -> u32 {
 
     let mut sum = 0;
     for (winner, card) in &pairs {
-        let winners = winner.nums.iter().filter(|w| card.nums.contains(w)).count();
+        let winners = winner.nums.intersection(&card.nums).count();
         if winners > 0 {
             sum += 2_u32.pow(winners as u32 - 1);
         }
@@ -49,21 +49,19 @@ fn p2(instr: &str) -> u32 {
         })
         .collect();
 
-    let mut done = vec![];
-    let mut cards = vec![];
-    for idx in 1..=pairs.len() {
-        cards.push(idx);
-    }
+    let mut done = 0;
+    let mut cards = vec![1; pairs.len()];
 
-    while let Some(c) = cards.pop() {
-        done.push(c);
-        let (winner, card) = &pairs[c - 1];
-        let winners = winner.nums.iter().filter(|w| card.nums.contains(w)).count();
-        for n in (c + 1)..=(c + winners) {
-            cards.push(n);
+    for i in 0..cards.len() {
+        done += cards[i];
+        let (winner, card) = &pairs[i];
+        let winners = winner.nums.intersection(&card.nums).count();
+        for n in (i + 1)..=(i + winners) {
+            cards[n] += cards[i];
         }
     }
-    done.len() as u32
+
+    done
 }
 
 fn main() {
