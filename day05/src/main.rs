@@ -23,6 +23,45 @@ impl FromStr for MapRule {
     }
 }
 
+fn intersect_range(tgt: Range, src: Range) -> (Option<Range>, Vec<Range>) {
+    let tgt_begin = tgt.0;
+    let tgt_range = tgt.1;
+    let tgt_end = tgt.0 + tgt.1 - 1;
+    let src_begin = src.0;
+    let src_end = src.0 + src.1 - 1;
+
+    if src_begin >= tgt_begin && src_begin <= tgt_end {
+        // src starts within tgt
+        if src_end >= tgt_begin && src_end <= tgt_end {
+            // src completly in tgt
+            (Some(src), vec![])
+        } else {
+            // src ends outside tgt
+            (
+                Some((src_begin, tgt_range - (src_begin - tgt_begin))),
+                vec![(tgt_begin + tgt_range, (src_end) - (tgt_end))],
+            )
+        }
+    } else if src_end >= tgt_begin && src_end <= tgt_end {
+        // src begins before tgt but ends in tgt
+        (
+            Some((tgt_begin, src_end - tgt_begin + 1)),
+            vec![(src_begin, tgt_begin - src_begin)],
+        )
+    } else if src_begin < tgt_begin && src_end > tgt_end {
+        // src contains tgt
+        (
+            Some(tgt),
+            vec![
+                (src_begin, tgt_begin - src_begin),
+                (tgt_begin + tgt_range, src_end - tgt_end),
+            ],
+        )
+    } else {
+        (None, vec![src])
+    }
+}
+
 impl MapRule {
     fn get(&self, n: u64) -> Option<u64> {
         if n >= self.src && n <= self.src + self.range {
@@ -33,39 +72,7 @@ impl MapRule {
     }
 
     fn intersect(&self, n: Range) -> (Option<Range>, Vec<Range>) {
-        // ugly af, also should have been a separate function with ranges instead of a method here
-        // for consistency
-        if n.0 >= self.src && n.0 < self.src + self.range {
-            if (n.0 + n.1 - 1) >= self.src && (n.0 + n.1 - 1) < self.src + self.range {
-                (Some(n), vec![])
-            } else {
-                (
-                    Some((n.0, self.range - (n.0 - self.src))),
-                    vec![(
-                        self.src + self.range,
-                        (n.0 + n.1 - 1) - (self.src + self.range - 1),
-                    )],
-                )
-            }
-        } else if (n.0 + n.1 - 1) >= self.src && (n.0 + n.1 - 1) < self.src + self.range {
-            (
-                Some((self.src, (n.0 + n.1 - 1) - self.src + 1)),
-                vec![(n.0, self.src - n.0)],
-            )
-        } else if n.0 < self.src && (n.0 + n.1 - 1) > self.src + self.range - 1 {
-            (
-                Some((self.src, self.range)),
-                vec![
-                    (n.0, self.src - n.0),
-                    (
-                        self.src + self.range,
-                        (n.0 + n.1 - 1) - (self.src + self.range - 1),
-                    ),
-                ],
-            )
-        } else {
-            (None, vec![n])
-        }
+        intersect_range((self.src, self.range), n)
     }
 
     fn conv(&self, n: Range) -> Range {
@@ -101,7 +108,7 @@ fn p1(instr: &str) -> u64 {
     let seeds = parse_seeds(seeds_str);
 
     let mut maps = vec![];
-    while let Some(to_map) = iter.next() {
+    for to_map in iter {
         let ranges: Vec<MapRule> = to_map.lines().skip(1).map(|l| l.parse().unwrap()).collect();
         maps.push(ranges);
     }
@@ -131,7 +138,7 @@ fn p2(instr: &str) -> u64 {
     let seeds = parse_seeds2(seeds_str);
 
     let mut maps = vec![];
-    while let Some(to_map) = iter.next() {
+    for to_map in iter {
         let ranges: Vec<MapRule> = to_map.lines().skip(1).map(|l| l.parse().unwrap()).collect();
         maps.push(ranges);
     }
