@@ -10,6 +10,19 @@ fn m_dist(a: Pos, b: Pos) -> i64 {
 fn sln(instr: &str, offset: i64) -> i64 {
     let mut tilemap: TileMap = HashSet::new();
 
+    let cols: HashSet<_> = instr
+        .lines()
+        .take(1)
+        .flat_map(|l| {
+            l.chars().enumerate().map(|(x, _)| x).filter(|x| {
+                instr
+                    .lines()
+                    .map(|l| l.chars().nth(*x).unwrap())
+                    .all(|c| c == '.')
+            })
+        })
+        .collect();
+
     let mut offset_y = 0;
     for (y, line) in instr.lines().enumerate() {
         let mut offset_x = 0;
@@ -17,15 +30,8 @@ fn sln(instr: &str, offset: i64) -> i64 {
         for (x, c) in line.chars().enumerate() {
             if c != '.' {
                 tilemap.insert((x as i64 + offset_x, y as i64 + offset_y));
-            } else {
-                // rip efficiency
-                if instr
-                    .lines()
-                    .map(|l| l.chars().nth(x).unwrap())
-                    .all(|c| c == '.')
-                {
-                    offset_x += offset - 1;
-                }
+            } else if cols.contains(&x) {
+                offset_x += offset - 1;
             }
         }
         if tilemap.len() == len_before {
