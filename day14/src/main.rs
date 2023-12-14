@@ -30,16 +30,36 @@ fn parse_map(s: &str) -> TileMap {
     tilemap
 }
 
-fn tilt_north(mut map: TileMap) -> TileMap {
+fn add(a: Pos, b: Pos) -> Pos {
+    (a.0 + b.0, a.1 + b.1)
+}
+
+fn tilt(mut map: TileMap, dir: Pos) -> TileMap {
+    // rip repeated calculations
+    let (max_x, max_y) = (
+        map.keys().map(|p| p.0).max().unwrap(),
+        map.keys().map(|p| p.1).max().unwrap(),
+    );
+
+    let (min_x, min_y) = (
+        map.keys().map(|p| p.0).min().unwrap(),
+        map.keys().map(|p| p.1).min().unwrap(),
+    );
+
+    let in_range = |(x, y)| x >= min_x && x <= max_x && y >= min_y && y <= max_y;
+
     loop {
         let mut clone = map.clone();
         for (pos, _) in map.iter().filter(|(_, r)| matches!(r, Rock::Round)) {
-            for y in (-1..pos.1).rev() {
-                if map.contains_key(&(pos.0, y)) || y == -1 {
+            let mut cur = *pos;
+            loop {
+                let next = add(cur, dir);
+                if map.contains_key(&next) || !in_range(next) {
                     let tmp = clone.remove(pos).unwrap();
-                    clone.insert((pos.0, y + 1), tmp);
+                    clone.insert(cur, tmp);
                     break;
                 }
+                cur = next;
             }
         }
         if clone == map {
@@ -50,66 +70,20 @@ fn tilt_north(mut map: TileMap) -> TileMap {
     map
 }
 
-fn tilt_west(mut map: TileMap) -> TileMap {
-    loop {
-        let mut clone = map.clone();
-        for (pos, _) in map.iter().filter(|(_, r)| matches!(r, Rock::Round)) {
-            for x in (-1..pos.0).rev() {
-                if map.contains_key(&(x, pos.1)) || x == -1 {
-                    let tmp = clone.remove(pos).unwrap();
-                    clone.insert((x + 1, pos.1), tmp);
-                    break;
-                }
-            }
-        }
-        if clone == map {
-            break;
-        }
-        map = clone;
-    }
-    map
+fn tilt_north(map: TileMap) -> TileMap {
+    tilt(map, (0, -1))
 }
 
-fn tilt_south(mut map: TileMap) -> TileMap {
-    let max_y = map.keys().map(|p| p.1).max().unwrap();
-    loop {
-        let mut clone = map.clone();
-        for (pos, _) in map.iter().filter(|(_, r)| matches!(r, Rock::Round)) {
-            for y in (pos.1 + 1)..=(max_y + 1) {
-                if map.contains_key(&(pos.0, y)) || y == max_y + 1 {
-                    let tmp = clone.remove(pos).unwrap();
-                    clone.insert((pos.0, y - 1), tmp);
-                    break;
-                }
-            }
-        }
-        if clone == map {
-            break;
-        }
-        map = clone;
-    }
-    map
+fn tilt_west(map: TileMap) -> TileMap {
+    tilt(map, (-1, 0))
 }
 
-fn tilt_east(mut map: TileMap) -> TileMap {
-    let max_x = map.keys().map(|p| p.0).max().unwrap();
-    loop {
-        let mut clone = map.clone();
-        for (pos, _) in map.iter().filter(|(_, r)| matches!(r, Rock::Round)) {
-            for x in (pos.0 + 1)..=(max_x + 1) {
-                if map.contains_key(&(x, pos.1)) || x == max_x + 1 {
-                    let tmp = clone.remove(pos).unwrap();
-                    clone.insert((x - 1, pos.1), tmp);
-                    break;
-                }
-            }
-        }
-        if clone == map {
-            break;
-        }
-        map = clone;
-    }
-    map
+fn tilt_south(map: TileMap) -> TileMap {
+    tilt(map, (0, 1))
+}
+
+fn tilt_east(map: TileMap) -> TileMap {
+    tilt(map, (1, 0))
 }
 
 fn calc_load(map: &TileMap) -> i64 {
