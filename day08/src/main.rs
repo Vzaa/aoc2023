@@ -6,7 +6,7 @@ fn p1(instr: &str) -> u64 {
     let map: HashMap<_, _> = map_str
         .lines()
         .map(|l| {
-            let (pos_str, dsts_str) = l.split_once("=").unwrap();
+            let (pos_str, dsts_str) = l.split_once('=').unwrap();
             let pos_str = pos_str.trim();
 
             let (l, r) = dsts_str
@@ -55,7 +55,7 @@ fn p2(instr: &str) -> u64 {
     let map: HashMap<_, _> = map_str
         .lines()
         .map(|l| {
-            let (pos_str, dsts_str) = l.split_once("=").unwrap();
+            let (pos_str, dsts_str) = l.split_once('=').unwrap();
             let pos_str = pos_str.trim();
 
             let (l, r) = dsts_str
@@ -67,11 +67,7 @@ fn p2(instr: &str) -> u64 {
         })
         .collect();
 
-    let mut poses: Vec<_> = map
-        .keys()
-        .filter(|p| p.ends_with('A'))
-        .map(|p| *p)
-        .collect();
+    let mut poses: Vec<_> = map.keys().filter(|p| p.ends_with('A')).copied().collect();
     let mut cycles = vec![];
 
     for p in &mut poses {

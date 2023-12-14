@@ -56,10 +56,10 @@ fn can_put(slots: &[Cond], idx: usize, len: usize) -> bool {
     }
 
     match slots.get(idx + len) {
-        Some(Cond::Unknown) => return true,
-        Some(Cond::Op) => return true,
-        Some(Cond::Broken) => return false,
-        None => return true,
+        Some(Cond::Unknown) => true,
+        Some(Cond::Op) => true,
+        Some(Cond::Broken) => false,
+        None => true,
     }
 }
 
@@ -77,9 +77,9 @@ fn solve<'a>(
     }
 
     for i in 0..conds.len() {
-        if can_put(&conds, i, length) {
+        if can_put(conds, i, length) {
             if rules.len() == 1 {
-                if !(i + length + 1 <= conds.len()
+                if !(i + length < conds.len()
                     && conds[i + length + 1..]
                         .iter()
                         .any(|x| matches!(x, Cond::Broken)))
@@ -115,7 +115,7 @@ fn p1(instr: &str) -> u64 {
         .iter()
         .map(|s| {
             let mut memo = HashMap::new();
-            return solve(&s.springs, &s.rules, 0, &mut memo);
+            solve(&s.springs, &s.rules, 0, &mut memo)
         })
         .sum()
 }
@@ -127,7 +127,7 @@ fn p2(instr: &str) -> u64 {
         .iter()
         .map(|s| {
             let mut memo = HashMap::new();
-            return solve(&s.springs, &s.rules, 0, &mut memo);
+            solve(&s.springs, &s.rules, 0, &mut memo)
         })
         .sum()
 }

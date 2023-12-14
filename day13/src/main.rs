@@ -62,7 +62,7 @@ fn horizontal(map: &TileMap, filter: Option<usize>) -> usize {
 }
 
 fn p1(instr: &str) -> usize {
-    let maps: Vec<_> = instr.split("\n\n").map(|m| parse_map(m)).collect();
+    let maps: Vec<_> = instr.split("\n\n").map(parse_map).collect();
 
     let mut sum = 0;
     for map in maps.iter() {
@@ -74,7 +74,7 @@ fn p1(instr: &str) -> usize {
 }
 
 fn p2(instr: &str) -> usize {
-    let maps: Vec<_> = instr.split("\n\n").map(|m| parse_map(m)).collect();
+    let maps: Vec<_> = instr.split("\n\n").map(parse_map).collect();
 
     let mut sum = 0;
     'outer: for map in maps.iter() {
