@@ -1,4 +1,6 @@
 use std::collections::HashMap;
+use std::collections::BinaryHeap;
+use std::cmp::Reverse;
 
 type Pos = (i64, i64);
 type TileMap = HashMap<Pos, u32>;
@@ -29,12 +31,13 @@ fn p1(instr: &str) -> u32 {
     let up = (0, -1);
     let down = (0, 1);
 
-    let state_init = ((0, 0), (0, 0), 0);
+    let state_init = (0, (0, 0), (0, 0));
 
-    let mut frontier = vec![state_init];
+    let mut frontier = BinaryHeap::new();
+    frontier.push(Reverse(state_init));
     let mut best = HashMap::new();
 
-    while let Some((cpos, ctraveled, cost)) = frontier.pop() {
+    while let Some(Reverse((cost, cpos, ctraveled))) = frontier.pop() {
         if let Some(&b) = best.get(&(cpos, ctraveled)) {
             if b < cost {
                 continue;
@@ -50,11 +53,11 @@ fn p1(instr: &str) -> u32 {
             if let Some(&b) = best.get(&(p, t)) {
                 if c < b {
                     best.insert((p, t), c);
-                    frontier.push((p, t, c))
+                    frontier.push(Reverse((c, p, t)))
                 }
             } else {
                 best.insert((p, t), c);
-                frontier.push((p, t, c))
+                frontier.push(Reverse((c, p, t)))
             }
         };
 
@@ -94,8 +97,6 @@ fn p1(instr: &str) -> u32 {
                 push_better(d_pos, down, heat + cost);
             }
         }
-
-        frontier.sort_by(|a, b| b.2.cmp(&a.2));
     }
     unreachable!()
 }
@@ -112,13 +113,15 @@ fn p2(instr: &str) -> u32 {
     let up = (0, -1);
     let down = (0, 1);
 
-    let state_init_a = ((0, 0), (10, 0), 0);
-    let state_init_b = ((0, 0), (0, 10), 0);
+    let state_init_a = (0, (0, 0), (10, 0));
+    let state_init_b = (0, (0, 0), (0, 10));
 
-    let mut frontier = vec![state_init_a, state_init_b];
+    let mut frontier = BinaryHeap::new();
+    frontier.push(Reverse(state_init_a));
+    frontier.push(Reverse(state_init_b));
     let mut best = HashMap::new();
 
-    while let Some((cpos, ctraveled, cost)) = frontier.pop() {
+    while let Some(Reverse((cost, cpos, ctraveled))) = frontier.pop() {
         if let Some(&b) = best.get(&(cpos, ctraveled)) {
             if b < cost {
                 continue;
@@ -134,11 +137,11 @@ fn p2(instr: &str) -> u32 {
             if let Some(&b) = best.get(&(p, t)) {
                 if c < b {
                     best.insert((p, t), c);
-                    frontier.push((p, t, c))
+                    frontier.push(Reverse((c, p, t)))
                 }
             } else {
                 best.insert((p, t), c);
-                frontier.push((p, t, c))
+                frontier.push(Reverse((c, p, t)))
             }
         };
 
@@ -178,8 +181,6 @@ fn p2(instr: &str) -> u32 {
                 push_better(d_pos, down, heat + cost);
             }
         }
-
-        frontier.sort_by(|a, b| b.2.cmp(&a.2));
     }
     unreachable!()
 }
