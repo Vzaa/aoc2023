@@ -1,8 +1,10 @@
-use std::collections::{HashMap, HashSet};
 use std::collections::BinaryHeap;
+use std::collections::{HashMap, HashSet};
 
 type Pos = (i32, i32);
 type TileMap = HashMap<Pos, char>;
+
+type State = (i32, Pos);
 
 static NLIST: [Pos; 4] = [(-1, 0), (0, -1), (0, 1), (1, 0)];
 
@@ -30,15 +32,18 @@ fn parse_map(s: &str) -> (TileMap, Pos) {
     (tilemap, start.unwrap())
 }
 
-fn solve(map: &TileMap, start: Pos, limit: i32, use_pu: bool) -> usize {
+fn solve(
+    map: &TileMap,
+    limit: i32,
+    use_pu: bool,
+    odd: &mut HashSet<Pos>,
+    even: &mut HashSet<Pos>,
+    visited: &mut HashMap<Pos, i32>,
+    initial: &mut Vec<State>,
+) -> usize {
     let mut frontier = BinaryHeap::new();
-    frontier.push((0, start));
-
-    let mut states = HashSet::new();
-
-    let mut odd = HashSet::new();
-    let mut even = HashSet::new();
-    let mut visited = HashMap::new();
+    frontier.extend(initial.iter().clone());
+    initial.clear();
 
     let (max_x, max_y) = (
         map.keys().map(|p| p.0).max().unwrap(),
@@ -54,7 +59,7 @@ fn solve(map: &TileMap, start: Pos, limit: i32, use_pu: bool) -> usize {
         visited.insert(pos, d);
 
         if d == limit {
-            states.insert(pos);
+            initial.push((d, pos));
             continue;
         }
 
@@ -80,16 +85,27 @@ fn solve(map: &TileMap, start: Pos, limit: i32, use_pu: bool) -> usize {
     }
 
     if limit % 2 == 0 {
-        states.extend(even);
+        even.len()
     } else {
-        states.extend(odd);
+        odd.len()
     }
-    states.len()
 }
 
 fn p1(instr: &str) -> usize {
     let (map, start) = parse_map(instr);
-    solve(&map, start, 64, false)
+    let mut odd = HashSet::new();
+    let mut even = HashSet::new();
+    let mut visited = HashMap::new();
+    let mut initial = vec![(0, start)];
+    solve(
+        &map,
+        64,
+        false,
+        &mut odd,
+        &mut even,
+        &mut visited,
+        &mut initial,
+    )
 }
 
 fn p2(instr: &str) -> usize {
@@ -103,8 +119,21 @@ fn p2(instr: &str) -> usize {
     let check = max_x as usize + 1;
     let tgt = 26501365;
 
+    let mut odd = HashSet::new();
+    let mut even = HashSet::new();
+    let mut visited = HashMap::new();
+    let mut initial = vec![(0, start)];
+
     for i in 1.. {
-        let next = solve(&map, start, i as i32, true);
+        let next = solve(
+            &map,
+            i as i32,
+            true,
+            &mut odd,
+            &mut even,
+            &mut visited,
+            &mut initial,
+        );
         past.push(next - prev);
         prev = next;
 
