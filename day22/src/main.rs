@@ -1,6 +1,6 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
-type Pos = (i32, i32, i32);
+type Pos = (i16, i16, i16);
 
 fn add(a: Pos, b: Pos) -> Pos {
     (a.0 + b.0, a.1 + b.1, a.2 + b.2)
@@ -15,13 +15,13 @@ impl Brick {
     fn from_str(s: &str) -> Brick {
         let (a_str, b_str) = s.split_once('~').unwrap();
 
-        let mut iter = a_str.split(',').map(|n| n.parse::<i32>().unwrap());
+        let mut iter = a_str.split(',').map(|n| n.parse::<i16>().unwrap());
         let a = (
             iter.next().unwrap(),
             iter.next().unwrap(),
             iter.next().unwrap(),
         );
-        let mut iter = b_str.split(',').map(|n| n.parse::<i32>().unwrap());
+        let mut iter = b_str.split(',').map(|n| n.parse::<i16>().unwrap());
         let b = (
             iter.next().unwrap(),
             iter.next().unwrap(),
@@ -50,19 +50,16 @@ impl Brick {
 fn fall(bricks: &mut [Brick]) -> Vec<usize> {
     let mut moved = vec![];
     let down = (0, 0, -1);
-    let map: HashSet<Pos> = bricks
+    let map: HashMap<Pos, usize> = bricks
         .iter()
-        .flat_map(|b| b.cubes.iter().cloned())
+        .enumerate()
+        .flat_map(|(idx, b)| b.cubes.iter().map(move |c| (*c, idx)))
         .collect();
 
     for (idx, b) in bricks.iter_mut().enumerate() {
-        let mut map = map.clone();
-        for c in &b.cubes {
-            map.remove(c);
-        }
         if b.cubes
             .iter()
-            .all(|&c| c.2 != 1 && !map.contains(&add(down, c)))
+            .all(|&c| c.2 != 1 && map.get(&add(down, c)).copied().unwrap_or(idx) == idx)
         {
             moved.push(idx);
             b.cubes.iter_mut().for_each(|c| *c = add(down, *c));
