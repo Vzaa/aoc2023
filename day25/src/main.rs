@@ -1,4 +1,9 @@
-use std::collections::{HashMap, HashSet};
+use std::{
+    cmp::Reverse,
+    collections::{BinaryHeap, HashMap, HashSet},
+};
+
+type Edge<'a> = (&'a str, &'a str);
 
 fn p1(instr: &str) -> usize {
     let pairs = instr.lines().flat_map(|l| {
@@ -21,13 +26,34 @@ fn p1(instr: &str) -> usize {
         cons.push((a, b));
     }
 
-    let reachables = |init, skip: &[(&str, &str)]| {
+    let distance = |src, dst: &str, skip: &[Edge]| {
+        let mut frontier = BinaryHeap::from([Reverse((0, src))]);
+        let mut visited = HashSet::new();
+        while let Some(Reverse((d, pos))) = frontier.pop() {
+            if pos == dst {
+                return d;
+            }
+            visited.insert(pos);
+            for &dst in &lut[&pos] {
+                if skip.contains(&(pos, dst)) || skip.contains(&(dst, pos)) {
+                    continue;
+                }
+
+                if !visited.contains(dst) {
+                    frontier.push(Reverse((d + 1, dst)));
+                }
+            }
+        }
+        unreachable!();
+    };
+
+    let reachables = |init, skip: &[Edge]| {
         let mut frontier = vec![init];
         let mut visited = HashSet::new();
         while let Some(pos) = frontier.pop() {
             visited.insert(pos);
             for &dst in &lut[&pos] {
-                if skip.contains(&(pos, dst))  || skip.contains(&(dst, pos)){
+                if skip.contains(&(pos, dst)) || skip.contains(&(dst, pos)) {
                     continue;
                 }
 
@@ -53,6 +79,18 @@ fn p1(instr: &str) -> usize {
         past
     };
 
+    let mut distances = vec![];
+    for (a, b) in &cons {
+        let d = distance(a, b, &[(a, b)]);
+        distances.push((d, (*a, *b)));
+    }
+    distances.sort();
+    distances.reverse();
+
+    let ans = count_islands(&[distances[0].1, distances[1].1, distances[2].1]);
+    assert_eq!(ans.len(), 2);
+    return ans[0].len() * ans[1].len();
+
     // graphviz baby
     // dot -T svg -o sln.svg sln.dot
     let header = "graph G {\nlayout=sfdp";
@@ -69,18 +107,16 @@ fn p1(instr: &str) -> usize {
         ("pnz", "tmt"),
         ("pnz", "gbc"),
         ("pnz", "mvv"),
-
         ("xkz", "tmt"),
         ("xkz", "gbc"),
         ("xkz", "mvv"),
-
         ("hxr", "tmt"),
         ("hxr", "gbc"),
         ("hxr", "mvv"),
     ];
-    let x = count_islands(&graphviz_ans);
-    assert_eq!(x.len(), 2);
-    x[0].len() * x[1].len()
+    let ans = count_islands(&graphviz_ans);
+    assert_eq!(ans.len(), 2);
+    ans[0].len() * ans[1].len()
 }
 
 fn main() {
